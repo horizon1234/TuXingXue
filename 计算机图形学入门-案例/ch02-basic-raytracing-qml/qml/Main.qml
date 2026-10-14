@@ -3,6 +3,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick3D
 
+// 第 2 章交互演示主窗口。
+// 左侧 Qt Quick 3D 仅解释空间关系；右侧图像完全由 C++ CPU 光线追踪器生成。
 ApplicationWindow {
     id: root
 
@@ -17,6 +19,7 @@ ApplicationWindow {
     font.family: "Microsoft YaHei"
     font.pixelSize: 14
 
+    // 顶栏展示当前章节、渲染分辨率以及最近一帧 CPU 耗时。
     header: Rectangle {
         implicitHeight: 64
         color: "#ffffff"
@@ -78,6 +81,7 @@ ApplicationWindow {
         anchors.fill: parent
         spacing: 1
 
+        // 主工作区保持左右并列，便于把三维场景和相机最终看到的画布直接对照。
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -132,6 +136,8 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
 
+                        // 教学用三维场景。sceneView 的 observerCamera 只是旁观者相机，
+                        // 不参与右侧光线追踪；书中位于原点的相机由下方 Node 单独绘制。
                         View3D {
                             id: sceneView
                             anchors.fill: parent
@@ -144,6 +150,7 @@ ApplicationWindow {
                                 antialiasingQuality: SceneEnvironment.High
                             }
 
+                            // 从斜上方观察整个教学场景，使概念相机、视口和球体同时可见。
                             PerspectiveCamera {
                                 id: observerCamera
                                 position: Qt.vector3d(650, 440, 920)
@@ -152,6 +159,7 @@ ApplicationWindow {
                                 clipFar: 3000
                             }
 
+                            // 这些灯光只用于增强左侧模型的空间感，不会影响右侧纯色渲染结果。
                             DirectionalLight {
                                 eulerRotation: Qt.vector3d(-35, -30, 0)
                                 brightness: 1.2
@@ -166,7 +174,7 @@ ApplicationWindow {
                                 quadraticFade: 0.000004
                             }
 
-                            // Neutral ground plane gives the scene a stable spatial reference.
+                            // 中性地面提供稳定的空间参照，不属于书中的待渲染场景。
                             Model {
                                 source: "#Cube"
                                 position: Qt.vector3d(0, -220, -300)
@@ -179,7 +187,9 @@ ApplicationWindow {
                                 }]
                             }
 
-                            // Book-space +Z points into the scene; Quick 3D uses -Z here.
+                            // 坐标映射：书本场景的 +Z 指向远方，而此处 Quick 3D 相机朝 -Z。
+                            // 因此所有书本坐标 (x,y,z) 在左侧显示为 (100x,100y,-100z)。
+                            // 三条细长立方体分别绘制 Z、X、Y 坐标轴。
                             Model {
                                 source: "#Cube"
                                 position: Qt.vector3d(0, 0, -300)
@@ -214,7 +224,8 @@ ApplicationWindow {
                                 }]
                             }
 
-                            // Conceptual camera at the origin.
+                            // 书中的概念相机位于原点。灰色立方体表示机身，橙色圆柱表示镜头；
+                            // 它与 observerCamera 分离，避免“观察教学场景”和“参与算法的相机”混淆。
                             Node {
                                 position: Qt.vector3d(0, 0, 20)
 
@@ -241,7 +252,8 @@ ApplicationWindow {
                                 }
                             }
 
-                            // Projection plane: 1 x 1 world units at z = 1.
+                            // 投影平面大小为 1x1 个书本场景单位，位于 z=1。
+                            // 由于上面的坐标映射，它在 Quick 3D 中位于 z=-100、宽高各 100。
                             Model {
                                 source: "#Cube"
                                 position: Qt.vector3d(0, 0, -100)
@@ -287,6 +299,8 @@ ApplicationWindow {
                                 materials: [PrincipledMaterial { baseColor: "#0284c7" }]
                             }
 
+                            // 同一个 SphereModel 同时驱动左侧 3D 委托和右侧 CPU 渲染器，
+                            // 从数据源上保证两边不会出现位置不同步。
                             Repeater3D {
                                 model: sceneController.sphereModel
 
@@ -300,8 +314,12 @@ ApplicationWindow {
 
                                     objectName: "sphere-" + sphereIndex
                                     source: "#Sphere"
+
+                                    // pickable 使 View3D.pick() 能从鼠标位置反查具体模型。
                                     pickable: true
                                     position: Qt.vector3d(centerX * 100, centerY * 100, -centerZ * 100)
+
+                                    // 内置 #Sphere 的直径为 100；半径 r 应显示为直径 200r，故缩放 2r。
                                     scale: Qt.vector3d(radius * 2, radius * 2, radius * 2)
                                     castsShadows: true
                                     receivesShadows: true
@@ -309,6 +327,8 @@ ApplicationWindow {
                                     materials: [PrincipledMaterial {
                                         baseColor: sphereColor
                                         roughness: 0.52
+
+                                        // 轻微自发光只标记当前选择，不改变 C++ 中的球体固有颜色。
                                         emissiveFactor: sphereIndex === sceneController.selectedSphere
                                                         ? Qt.vector3d(0.12, 0.12, 0.12)
                                                         : Qt.vector3d(0, 0, 0)
@@ -317,6 +337,8 @@ ApplicationWindow {
                             }
                         }
 
+                        // 透明 MouseArea 覆盖 View3D，把二维指针事件转换成球体选择和位置增量。
+                        // 拖动修改书本 X/Y 坐标；滚轮修改深度 Z。所有边界校验由 C++ 控制器完成。
                         MouseArea {
                             id: sceneMouse
                             anchors.fill: parent
@@ -329,6 +351,7 @@ ApplicationWindow {
                             property real previousY: 0
 
                             onPressed: function(mouse) {
+                                // pick() 返回射线首先击中的 Quick 3D 对象；objectName 保存模型行索引。
                                 const result = sceneView.pick(mouse.x, mouse.y)
                                 if (result.objectHit && result.objectHit.objectName.indexOf("sphere-") === 0) {
                                     sceneController.selectedSphere = Number(result.objectHit.objectName.substring(7))
@@ -342,6 +365,7 @@ ApplicationWindow {
                                 if (!movingSphere || !(mouse.buttons & Qt.LeftButton))
                                     return
 
+                                // 每 100 个屏幕像素对应 1 个书本场景单位；屏幕 Y 方向需要翻转。
                                 const dx = (mouse.x - previousX) * 0.01
                                 const dy = -(mouse.y - previousY) * 0.01
                                 sceneController.moveSelectedBy(dx, dy, 0)
@@ -353,6 +377,7 @@ ApplicationWindow {
                             onCanceled: movingSphere = false
 
                             onWheel: function(wheel) {
+                                // 正滚轮把球体拉近相机，因此书本场景中的正 Z 值减小。
                                 sceneController.moveSelectedBy(0, 0, wheel.angleDelta.y > 0 ? -0.15 : 0.15)
                                 wheel.accepted = true
                             }
@@ -438,6 +463,8 @@ ApplicationWindow {
                             anchors.centerIn: parent
                             width: Math.min(parent.width - 40, parent.height - 40)
                             height: width
+                            // 查询参数形成随 revision 变化的 URL，强制 QML 在新帧发布后重新
+                            // 调用 RayImageProvider，而不是继续使用上一帧的图片缓存。
                             source: "image://raytracer/frame?revision=" + sceneController.renderRevision
                             sourceSize: Qt.size(sceneController.renderWidth, sceneController.renderHeight)
                             fillMode: Image.PreserveAspectFit
@@ -456,6 +483,7 @@ ApplicationWindow {
             }
         }
 
+        // 底部控制区直接绑定当前球体坐标；滑块变化交给 C++ 限幅并调度新帧。
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 152
