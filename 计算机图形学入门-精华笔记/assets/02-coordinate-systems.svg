@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="540" viewBox="0 0 1200 540" role="img" aria-labelledby="title desc">
+  <title id="title">屏幕坐标与画布坐标对比</title>
+  <desc id="desc">左侧屏幕坐标原点位于左上角，右侧画布坐标原点位于中心且 Y 轴向上。</desc>
+  <defs>
+    <marker id="axisArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="540" fill="#f8fafc"/>
+
+  <text x="300" y="55" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" fill="#0f172a">屏幕坐标</text>
+  <rect x="80" y="90" width="440" height="340" rx="4" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <circle cx="115" cy="125" r="7" fill="#dc2626"/>
+  <text x="130" y="115" font-family="Consolas, monospace" font-size="18" fill="#dc2626">(0, 0)</text>
+  <line x1="115" y1="125" x2="465" y2="125" stroke="#334155" stroke-width="3" marker-end="url(#axisArrow)"/>
+  <line x1="115" y1="125" x2="115" y2="390" stroke="#334155" stroke-width="3" marker-end="url(#axisArrow)"/>
+  <text x="478" y="132" font-family="Consolas, monospace" font-size="22" fill="#334155">+X</text>
+  <text x="126" y="400" font-family="Consolas, monospace" font-size="22" fill="#334155">+Y</text>
+  <text x="300" y="473" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="20" fill="#475569">原点在左上角，Y 轴向下</text>
+
+  <text x="900" y="55" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" fill="#0f172a">书中的画布坐标</text>
+  <rect x="680" y="90" width="440" height="340" rx="4" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <circle cx="900" cy="260" r="7" fill="#dc2626"/>
+  <text x="915" y="283" font-family="Consolas, monospace" font-size="18" fill="#dc2626">(0, 0)</text>
+  <line x1="710" y1="260" x2="1090" y2="260" stroke="#334155" stroke-width="3" marker-end="url(#axisArrow)"/>
+  <line x1="900" y1="400" x2="900" y2="115" stroke="#334155" stroke-width="3" marker-end="url(#axisArrow)"/>
+  <text x="1080" y="250" font-family="Consolas, monospace" font-size="22" fill="#334155">+X</text>
+  <text x="915" y="130" font-family="Consolas, monospace" font-size="22" fill="#334155">+Y</text>
+  <text x="900" y="473" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="20" fill="#475569">原点在中心，Y 轴向上</text>
+
+  <text x="600" y="515" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#0f172a">转换口诀：中心平移，Y 轴翻转</text>
+</svg>

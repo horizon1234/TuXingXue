@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">基础光线追踪流程</title>
+  <desc id="desc">相机发出的射线穿过视口上的点，击中场景中的球体，球体颜色最终写入画布像素。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="360" fill="#f8fafc"/>
+
+  <circle cx="105" cy="180" r="18" fill="#d97706"/>
+  <text x="105" y="225" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="700" fill="#78350f">相机 O</text>
+
+  <rect x="330" y="70" width="12" height="220" fill="#bae6fd" stroke="#0284c7" stroke-width="3"/>
+  <circle cx="336" cy="150" r="8" fill="#0284c7"/>
+  <text x="336" y="325" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="700" fill="#075985">视口 V</text>
+
+  <line x1="123" y1="178" x2="785" y2="92" stroke="#334155" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="515" y="105" text-anchor="middle" font-family="Consolas, monospace" font-size="20" fill="#334155">P(t) = O + tD</text>
+
+  <circle cx="845" cy="84" r="78" fill="#ef4444" stroke="#b91c1c" stroke-width="3"/>
+  <circle cx="785" cy="92" r="9" fill="#111827"/>
+  <text x="845" y="190" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="700" fill="#7f1d1d">最近球体</text>
+
+  <line x1="930" y1="180" x2="1035" y2="180" stroke="#334155" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="1050" y="115" width="95" height="130" rx="4" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
+  <rect x="1077" y="152" width="42" height="42" fill="#ef4444"/>
+  <text x="1098" y="280" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="700" fill="#334155">画布像素</text>
+
+  <text x="600" y="344" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#0f172a">像素 → 视口点 → 射线 → 最近交点 → 颜色</text>
+</svg>
