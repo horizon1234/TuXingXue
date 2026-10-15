@@ -182,7 +182,7 @@ ApplicationWindow {
                                 castsShadows: false
                                 receivesShadows: true
                                 materials: [PrincipledMaterial {
-                                    baseColor: "#e5e7eb"
+                                    baseColor: '#9c216d'
                                     roughness: 1.0
                                 }]
                             }

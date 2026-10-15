@@ -32,4 +32,21 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 .\build-ascii\ch02_raytracing.exe
 ```
 
+也可以使用案例目录中的 `Makefile` 快速构建和运行。Qt MinGW 环境提供的命令名称通常是 `mingw32-make`；如果系统已配置 `make`，可将下面命令中的 `mingw32-make` 替换为 `make`。
+
+```powershell
+cd .\计算机图形学入门-案例\ch02-basic-raytracing-qml
+mingw32-make run
+```
+
+常用目标：
+
+```text
+mingw32-make build   # 只配置并编译
+mingw32-make run     # 停止旧进程、编译并运行
+mingw32-make stop    # 停止正在运行的程序
+mingw32-make clean   # 删除生成的构建目录
+mingw32-make help    # 查看帮助
+```
+
 两本原始 PDF 仅作为本地学习资料使用，不包含在仓库中。
