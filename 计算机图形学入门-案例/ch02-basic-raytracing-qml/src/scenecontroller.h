@@ -27,7 +27,7 @@ class SceneController final : public QObject
     Q_PROPERTY(float selectedY READ selectedY WRITE setSelectedY NOTIFY selectedPositionChanged)
     Q_PROPERTY(float selectedZ READ selectedZ WRITE setSelectedZ NOTIFY selectedPositionChanged)
 
-    // 第 2、3 章的渐进式场景。名称列表供 ComboBox 显示，索引直接对应 RayTracer 模式。
+    // 第 2～4 章的渐进式场景。名称列表供 ComboBox 显示，索引直接对应 RayTracer 模式。
     Q_PROPERTY(QStringList lightingModeNames READ lightingModeNames CONSTANT)
     Q_PROPERTY(int lightingMode READ lightingMode WRITE setLightingMode NOTIFY lightingModeChanged)
 
@@ -71,10 +71,10 @@ public:
     /** @return 按渲染模式索引排列的中文场景名称。 */
     QStringList lightingModeNames() const;
 
-    /** @return 当前渲染模式，范围为 `[0,5]`。 */
+    /** @return 当前渲染模式，范围为 `[0,8]`。 */
     int lightingMode() const;
 
-    /** @brief 切换光照演示模式，并调度右侧画布重新渲染。 */
+    /** @brief 切换光照、阴影或反射演示模式，并调度右侧画布重新渲染。 */
     void setLightingMode(int mode);
 
     /** @return 已发布渲染帧的递增版本号。 */
@@ -106,7 +106,7 @@ signals:
     void renderRevisionChanged();
     /** @brief 最近一次渲染耗时已经更新。 */
     void renderMillisecondsChanged();
-    /** @brief 第 2、3 章光照演示模式已经切换。 */
+    /** @brief 第 2～4 章光照、阴影或递归反射演示模式已经切换。 */
     void lightingModeChanged();
 
 private:
@@ -130,7 +130,7 @@ private:
     SphereModel m_sphereModel;                  ///< 场景数据及 QML 列表模型。
     QTimer m_renderTimer;                       ///< 合并滑块和拖动产生的高频渲染请求。
     int m_selectedSphere = 0;                   ///< 当前选中的模型行。
-    int m_lightingMode = 5;                     ///< 默认显示第 3 章的完整镜面反射场景。
+    int m_lightingMode = 8;                     ///< 默认显示第 4 章的三层递归反射场景。
     int m_renderRevision = 0;                   ///< 已发布帧的单调递增版本号。
     double m_renderMilliseconds = 0.0;          ///< 最近一次 CPU 渲染耗时。
 };

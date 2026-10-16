@@ -85,7 +85,10 @@ QStringList SceneController::lightingModeNames() const
         QStringLiteral("点光 · I=0.6"),
         QStringLiteral("方向光 · I=0.2"),
         QStringLiteral("漫反射 · 三光源"),
-        QStringLiteral("镜面反射 · 完整模型")
+        QStringLiteral("镜面高光 · 完整模型"),
+        QStringLiteral("第4章 · 阴影射线"),
+        QStringLiteral("第4章 · 一次反射"),
+        QStringLiteral("第4章 · 三层递归反射")
     };
 }
 
@@ -97,7 +100,7 @@ int SceneController::lightingMode() const
 void SceneController::setLightingMode(int mode)
 {
     constexpr int firstMode = static_cast<int>(RayTracer::LightingMode::Unlit);
-    constexpr int lastMode = static_cast<int>(RayTracer::LightingMode::SpecularCombined);
+    constexpr int lastMode = static_cast<int>(RayTracer::LightingMode::ReflectionRecursive);
     const int clampedMode = std::clamp(mode, firstMode, lastMode);
     if (m_lightingMode == clampedMode) {
         return;

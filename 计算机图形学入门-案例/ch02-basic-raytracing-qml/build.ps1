@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Builds the Chapter 2 Qt/QML ray-tracing demonstration.
+Builds the Chapters 2-4 Qt/QML ray-tracing demonstration.
 
 .DESCRIPTION
 Qt 6.9 moc cannot write to build paths containing non-ASCII characters in some

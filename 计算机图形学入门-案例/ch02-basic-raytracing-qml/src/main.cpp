@@ -17,13 +17,13 @@
  * @brief 创建 Qt Quick 应用、连接 C++ 场景后端并进入事件循环。
  *
  * 可选参数 `--screenshot <path>` 用于自动化视觉验证：窗口完成首帧渲染后保存
- * 截图并退出；`--lighting-mode <0..5>` 用于直接选择第 2、3 章的渐进场景。
- * 正常启动时程序持续运行，由用户通过 QML 界面切换光照并移动球体。
+ * 截图并退出；`--lighting-mode <0..8>` 用于直接选择第 2～4 章的渐进场景。
+ * 正常启动时程序持续运行，由用户通过 QML 界面切换效果并移动球体。
  */
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
-    QCoreApplication::setApplicationName(QStringLiteral("第2至3章光线追踪与光照"));
+    QCoreApplication::setApplicationName(QStringLiteral("第2至4章光线追踪演示"));
     QCoreApplication::setOrganizationName(QStringLiteral("GraphicsStudy"));
 
     // 固定使用跨平台 Basic 样式，避免原生控件风格改变布局尺寸和截图结果。
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
     // 截图参数只服务构建验证，不影响正常交互模式。
     QCommandLineParser parser;
-    parser.setApplicationDescription(QStringLiteral("《计算机图形学入门》第2至3章交互演示"));
+    parser.setApplicationDescription(QStringLiteral("《计算机图形学入门》第2至4章交互演示"));
     parser.addHelpOption();
     const QCommandLineOption screenshotOption(
         QStringLiteral("screenshot"),
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 
     const QCommandLineOption lightingModeOption(
         QStringList{QStringLiteral("m"), QStringLiteral("lighting-mode")},
-        QStringLiteral("选择光照场景，取值范围为 0 到 5。"),
+        QStringLiteral("选择渐进场景，取值范围为 0 到 8。"),
         QStringLiteral("index"));
     parser.addOption(lightingModeOption);
     parser.process(app);
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     if (parser.isSet(lightingModeOption)) {
         bool isNumber = false;
         const int requestedMode = parser.value(lightingModeOption).toInt(&isNumber);
-        if (!isNumber || requestedMode < 0 || requestedMode > 5) {
+        if (!isNumber || requestedMode < 0 || requestedMode > 8) {
             // 无效自动化参数属于调用错误，不能静默回退到默认场景。
             return 2;
         }

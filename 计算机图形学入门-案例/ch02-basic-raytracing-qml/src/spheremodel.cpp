@@ -39,6 +39,8 @@ QVariant SphereModel::data(const QModelIndex &index, int role) const
         return sphere.color;
     case SpecularExponentRole:
         return sphere.specularExponent;
+    case ReflectivityRole:
+        return sphere.reflectivity;
     case SphereIndexRole:
         return index.row();
     default:
@@ -57,6 +59,7 @@ QHash<int, QByteArray> SphereModel::roleNames() const
         {RadiusRole, "radius"},
         {SphereColorRole, "sphereColor"},
         {SpecularExponentRole, "specularExponent"},
+        {ReflectivityRole, "reflectivity"},
         {SphereIndexRole, "sphereIndex"}
     };
 }
@@ -96,10 +99,26 @@ void SphereModel::resetToDefaults()
     // begin/endResetModel 保证 ComboBox 和 Repeater3D 不会在容器替换期间读取旧行。
     beginResetModel();
     m_spheres = {
-        // 几何数据沿用第 2 章；颜色和光泽度对应第 3 章最终场景的精确定义。
-        {QStringLiteral("红色球体"), {0.0f, -1.0f, 3.0f}, 1.0f, QColor(255, 0, 0), 500.0f},
-        {QStringLiteral("蓝色球体"), {2.0f, 0.0f, 4.0f}, 1.0f, QColor(0, 0, 255), 500.0f},
-        {QStringLiteral("绿色球体"), {-2.0f, 0.0f, 4.0f}, 1.0f, QColor(0, 255, 0), 10.0f}
+        // 几何数据沿用第 2 章，光泽度来自第 3 章；最后一项是第 4 章给出的反射率。
+        // 反射率依次增大，便于在同一画面中比较局部颜色与反射颜色的混合比例。
+        {QStringLiteral("红色球体"),
+         {0.0f, -1.0f, 3.0f},
+         1.0f,
+         QColor(255, 0, 0),
+         500.0f,
+         0.2f},
+        {QStringLiteral("蓝色球体"),
+         {2.0f, 0.0f, 4.0f},
+         1.0f,
+         QColor(0, 0, 255),
+         500.0f,
+         0.3f},
+        {QStringLiteral("绿色球体"),
+         {-2.0f, 0.0f, 4.0f},
+         1.0f,
+         QColor(0, 255, 0),
+         10.0f,
+         0.4f}
     };
     endResetModel();
 }

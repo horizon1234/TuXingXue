@@ -1,4 +1,4 @@
-# Makefile for the Chapter 2 Qt/QML ray-tracing example.
+# Makefile for the Chapters 2-4 Qt/QML ray-tracing example.
 #
 # The project must be built through build.ps1 because Qt 6.9 may fail to
 # process the original Chinese project path when moc or qmlimportscanner is

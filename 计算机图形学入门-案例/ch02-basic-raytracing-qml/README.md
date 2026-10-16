@@ -1,12 +1,12 @@
-# 第 2–3 章：基础光线追踪与光照演示
+# 第 2～4 章：光线追踪、光照、阴影与反射
 
-这是《计算机图形学入门：3D 渲染指南》第 2、3 章共用的交互测试程序。项目直接在第 2 章代码上递进，没有拆分或复制工程。
+这是《计算机图形学入门：3D 渲染指南》第 2～4 章共用的交互测试程序。项目直接在第 2 章代码上递进，没有拆分或复制工程。
 
-程序实现固定相机、射线与球体求交、最近交点、环境光、点光、方向光、漫反射和镜面反射。阴影仍留到第 4 章。
+程序实现固定相机、射线与球体求交、最近交点、环境光、点光、方向光、Lambert 漫反射、Phong 镜面高光、硬阴影和递归镜面反射。
 
 ## 界面结构
 
-- 顶部：六种渐进场景选择，从第 2 章纯色基线逐步过渡到完整镜面反射。
+- 顶部：九种渐进场景选择，从第 2 章纯色基线逐步过渡到三层递归反射。
 - 左侧：Qt Quick 3D 教学场景，显示概念相机、视口、光源和三个球体。
 - 右侧：C++ 在 CPU 上逐像素生成的光线追踪画布。
 - 底部：球体选择和 `X/Y/Z` 坐标控制。
@@ -27,8 +27,10 @@ C++
   ├─ ComputeLighting
   │   ├─ 环境光
   │   ├─ 漫反射
-  │   └─ 镜面反射
-  ├─ TraceRay
+  │   ├─ 镜面高光
+  │   └─ 阴影可见性检测
+  ├─ ClosestIntersection
+  ├─ TraceRay 递归反射
   └─ QImage 像素输出
 ```
 
@@ -57,8 +59,16 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 .\build-ascii\ch02_raytracing.exe
 ```
 
-程序还提供自动截图和场景选择参数。`--lighting-mode` 的有效值为 `0..5`：
+程序还提供自动截图和场景选择参数。`--lighting-mode` 的有效值为 `0..8`：
 
 ```powershell
-.\build-ascii\ch02_raytracing.exe --lighting-mode 5 --screenshot screenshot.png
+.\build-ascii\ch02_raytracing.exe --lighting-mode 8 --screenshot screenshot.png
+```
+
+第 4 章新增模式：
+
+```text
+6  阴影射线
+7  阴影 + 一次反射
+8  阴影 + 三层递归反射
 ```

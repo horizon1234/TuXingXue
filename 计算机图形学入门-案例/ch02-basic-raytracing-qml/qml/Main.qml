@@ -3,8 +3,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick3D
 
-// 第 2、3 章交互演示主窗口。
-// 左侧 Qt Quick 3D 解释空间与光源关系；右侧图像完全由 C++ CPU 光线追踪器生成。
+// 第 2～4 章交互演示主窗口。
+// 左侧 Qt Quick 3D 解释空间、光源和遮挡关系；右侧图像完全由 C++ CPU 光线追踪器生成。
 ApplicationWindow {
     id: root
 
@@ -13,7 +13,7 @@ ApplicationWindow {
     minimumWidth: 1100
     minimumHeight: 720
     visible: true
-    title: qsTr("第 2–3 章 · 光线追踪与光")
+    title: qsTr("第 2–4 章 · 光线追踪、光、阴影与反射")
     color: "#e7e9ec"
 
     font.family: "Microsoft YaHei"
@@ -27,7 +27,10 @@ ApplicationWindow {
         case 2: return qsTr("点光位置 (2,1,0) · 漫反射")
         case 3: return qsTr("方向 (1,4,4) · 漫反射")
         case 4: return qsTr("环境光 + 点光 + 方向光")
-        default: return qsTr("漫反射 + 镜面反射")
+        case 5: return qsTr("漫反射 + 镜面高光")
+        case 6: return qsTr("可见性检测 · 硬阴影")
+        case 7: return qsTr("阴影 + 一次反射")
+        default: return qsTr("阴影 + 三层递归反射")
         }
     }
 
@@ -53,7 +56,7 @@ ApplicationWindow {
                 spacing: 1
 
                 Label {
-                    text: qsTr("第 2–3 章 · 光线追踪与光")
+                    text: qsTr("第 2–4 章 · 光线追踪进阶")
                     color: "#18212b"
                     font.pixelSize: 20
                     font.bold: true
@@ -70,7 +73,7 @@ ApplicationWindow {
 
             ComboBox {
                 id: lightingModeBox
-                Layout.preferredWidth: 230
+                Layout.preferredWidth: 250
                 model: sceneController.lightingModeNames
                 currentIndex: sceneController.lightingMode
                 onActivated: sceneController.lightingMode = currentIndex
@@ -139,7 +142,9 @@ ApplicationWindow {
                             Label {
                                 text: sceneController.lightingMode === 0
                                       ? qsTr("相机 O(0,0,0)  ·  视口 z=1")
-                                      : qsTr("光源与材质同步预览")
+                                      : (sceneController.lightingMode >= 6
+                                         ? qsTr("光源、遮挡与材质同步预览")
+                                         : qsTr("光源与材质同步预览"))
                                 color: "#7a8490"
                                 font.family: "Consolas"
                                 font.pixelSize: 12
@@ -182,7 +187,7 @@ ApplicationWindow {
                             }
 
                             // 左侧灯光用于直观预览当前模式；右侧仍独立执行书中的 CPU 光照公式。
-                            // 第 3 章尚未引入阴影，因此所有教学灯都关闭阴影投射。
+                            // 第 4 章模式启用 Quick 3D 阴影只为说明遮挡关系，不替代右侧阴影射线。
                             DirectionalLight {
                                 eulerRotation: Qt.vector3d(-35, -30, 0)
                                 visible: sceneController.lightingMode === 0
@@ -190,7 +195,7 @@ ApplicationWindow {
                                          || sceneController.lightingMode >= 4
                                 brightness: sceneController.lightingMode === 0 ? 1.2 : 1.0
                                 ambientColor: sceneController.lightingMode === 0 ? "#737b85" : "#202020"
-                                castsShadow: false
+                                castsShadow: sceneController.lightingMode >= 6
                             }
 
                             PointLight {
@@ -203,7 +208,7 @@ ApplicationWindow {
                                 constantFade: 1
                                 linearFade: 0
                                 quadraticFade: 0
-                                castsShadow: false
+                                castsShadow: sceneController.lightingMode >= 6
                             }
 
                             // 模式 0 保留原有教学地面；第 3 章模式改为书中的黄色“大球地面”。
@@ -212,10 +217,11 @@ ApplicationWindow {
                                 position: Qt.vector3d(0, -220, -300)
                                 scale: Qt.vector3d(8, 0.015, 8)
                                 castsShadows: false
-                                receivesShadows: false
+                                receivesShadows: sceneController.lightingMode >= 6
                                 materials: [PrincipledMaterial {
                                     baseColor: sceneController.lightingMode === 0 ? "#9c216d" : "#e0bd12"
-                                    roughness: sceneController.lightingMode === 5 ? 0.24 : 1.0
+                                    roughness: sceneController.lightingMode >= 5 ? 0.24 : 1.0
+                                    metalness: sceneController.lightingMode >= 7 ? 0.25 : 0.0
                                     emissiveFactor: sceneController.lightingMode === 1
                                                     ? Qt.vector3d(0.18, 0.18, 0.03)
                                                     : Qt.vector3d(0, 0, 0)
@@ -363,6 +369,7 @@ ApplicationWindow {
                                     required property real radius
                                     required property color sphereColor
                                     required property real specularExponent
+                                    required property real reflectivity
                                     required property int sphereIndex
 
                                     objectName: "sphere-" + sphereIndex
@@ -374,14 +381,18 @@ ApplicationWindow {
 
                                     // 内置 #Sphere 的直径为 100；半径 r 应显示为直径 200r，故缩放 2r。
                                     scale: Qt.vector3d(radius * 2, radius * 2, radius * 2)
-                                    castsShadows: false
-                                    receivesShadows: false
+                                    castsShadows: sceneController.lightingMode >= 6
+                                    receivesShadows: sceneController.lightingMode >= 6
 
                                     materials: [PrincipledMaterial {
                                         baseColor: sphereColor
-                                        roughness: sceneController.lightingMode === 5
+                                        roughness: sceneController.lightingMode >= 5
                                                    ? (specularExponent >= 500 ? 0.18 : 0.55)
                                                    : 1.0
+
+                                        // Quick 3D 的 PBR 金属度不是书中反射率公式本身，仅用于让左侧
+                                        // 材质在反射模式下更易辨认；右侧严格使用 C++ 中的 reflectivity。
+                                        metalness: sceneController.lightingMode >= 7 ? reflectivity : 0.0
 
                                         // 环境光模式用均匀自发光近似；其他模式仅轻微标记当前选择。
                                         emissiveFactor: sceneController.lightingMode === 1

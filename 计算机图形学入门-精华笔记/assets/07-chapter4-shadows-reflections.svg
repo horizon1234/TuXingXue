@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="650" viewBox="0 0 1100 650">
+  <defs>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#15803d"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#dc2626"/>
+    </marker>
+    <marker id="arrow-violet" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <rect width="1100" height="650" fill="#ffffff"/>
+  <text x="40" y="48" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" fill="#17202a">第 4 章的两类次级射线</text>
+  <text x="40" y="78" font-family="Microsoft YaHei, sans-serif" font-size="16" fill="#5f6b76">阴影射线回答“光源是否可见”，反射射线回答“镜面方向看见什么”</text>
+
+  <rect x="40" y="105" width="500" height="410" rx="6" fill="#f7f9fb" stroke="#cbd3db"/>
+  <text x="65" y="143" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#17202a">1. 阴影：从 P 向光源追踪</text>
+
+  <circle cx="125" cy="195" r="25" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+  <line x1="108" y1="178" x2="88" y2="158" stroke="#ca8a04" stroke-width="3"/>
+  <line x1="142" y1="178" x2="162" y2="158" stroke="#ca8a04" stroke-width="3"/>
+  <line x1="101" y1="195" x2="73" y2="195" stroke="#ca8a04" stroke-width="3"/>
+  <line x1="149" y1="195" x2="177" y2="195" stroke="#ca8a04" stroke-width="3"/>
+  <text x="102" y="238" font-family="Consolas, monospace" font-size="18" font-weight="700" fill="#7c4a03">光源 Q</text>
+
+  <line x1="455" y1="390" x2="145" y2="213" stroke="#15803d" stroke-width="4" marker-end="url(#arrow-green)"/>
+  <text x="327" y="316" font-family="Consolas, monospace" font-size="18" font-weight="700" fill="#15803d">L = Q - P</text>
+
+  <circle cx="285" cy="292" r="58" fill="#64748b" stroke="#334155" stroke-width="3"/>
+  <text x="237" y="286" font-family="Microsoft YaHei, sans-serif" font-size="17" font-weight="700" fill="#ffffff">遮挡物</text>
+  <text x="235" y="310" font-family="Microsoft YaHei, sans-serif" font-size="14" fill="#e2e8f0">命中则跳过此灯</text>
+
+  <line x1="75" y1="402" x2="500" y2="402" stroke="#6b7280" stroke-width="5"/>
+  <circle cx="455" cy="402" r="8" fill="#17202a"/>
+  <text x="444" y="438" font-family="Consolas, monospace" font-size="20" font-weight="700" fill="#17202a">P</text>
+  <line x1="455" y1="392" x2="455" y2="285" stroke="#2563eb" stroke-width="4" marker-end="url(#arrow-blue)"/>
+  <text x="469" y="301" font-family="Consolas, monospace" font-size="18" font-weight="700" fill="#2563eb">N</text>
+
+  <text x="65" y="470" font-family="Microsoft YaHei, sans-serif" font-size="15" fill="#374151">点光：检查 t ∈ [ε, 1]，因为 t=1 正好到 Q</text>
+  <text x="65" y="496" font-family="Microsoft YaHei, sans-serif" font-size="15" fill="#374151">方向光：检查 t ∈ [ε, ∞)，光源被视为无限远</text>
+
+  <rect x="560" y="105" width="500" height="410" rx="6" fill="#fffaf3" stroke="#e6c48a"/>
+  <text x="585" y="143" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#17202a">2. 反射：沿 R 再调用 TraceRay</text>
+
+  <rect x="600" y="195" width="58" height="42" rx="4" fill="#374151"/>
+  <circle cx="629" cy="216" r="10" fill="#111827" stroke="#d97706" stroke-width="5"/>
+  <text x="601" y="178" font-family="Consolas, monospace" font-size="18" font-weight="700" fill="#374151">相机 O</text>
+
+  <path d="M615 402 Q805 365 1025 402" fill="none" stroke="#6b7280" stroke-width="5"/>
+  <circle cx="800" cy="374" r="8" fill="#17202a"/>
+  <text x="787" y="410" font-family="Consolas, monospace" font-size="20" font-weight="700" fill="#17202a">P</text>
+
+  <line x1="658" y1="237" x2="794" y2="367" stroke="#2563eb" stroke-width="4" marker-end="url(#arrow-blue)"/>
+  <text x="694" y="278" font-family="Consolas, monospace" font-size="18" font-weight="700" fill="#2563eb">D</text>
+
+  <line x1="800" y1="364" x2="800" y2="195" stroke="#15803d" stroke-width="4" marker-end="url(#arrow-green)"/>
+  <text x="814" y="215" font-family="Consolas, monospace" font-size="18" font-weight="700" fill="#15803d">N</text>
+
+  <line x1="806" y1="367" x2="930" y2="240" stroke="#dc2626" stroke-width="4" marker-end="url(#arrow-red)"/>
+  <text x="854" y="286" font-family="Consolas, monospace" font-size="18" font-weight="700" fill="#dc2626">R</text>
+
+  <circle cx="970" cy="200" r="52" fill="#7c3aed" fill-opacity="0.76" stroke="#5b21b6" stroke-width="3"/>
+  <text x="944" y="205" font-family="Microsoft YaHei, sans-serif" font-size="16" font-weight="700" fill="#ffffff">其他物体</text>
+
+  <text x="585" y="455" font-family="Consolas, monospace" font-size="17" fill="#374151">R = ReflectRay(-D, N)</text>
+  <text x="585" y="482" font-family="Consolas, monospace" font-size="17" fill="#374151">Cref = TraceRay(P, R, ε, ∞, depth-1)</text>
+
+  <rect x="40" y="545" width="1020" height="70" rx="6" fill="#f5f3ff" stroke="#c4b5fd"/>
+  <text x="65" y="574" font-family="Microsoft YaHei, sans-serif" font-size="16" font-weight="700" fill="#5b21b6">最终混色</text>
+  <text x="65" y="601" font-family="Consolas, monospace" font-size="20" fill="#17202a">C = (1-r) × Clocal + r × Creflected</text>
+  <text x="575" y="601" font-family="Microsoft YaHei, sans-serif" font-size="15" fill="#5b21b6">r=0：只看自身颜色　　r=1：只看反射颜色</text>
+</svg>

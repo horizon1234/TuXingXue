@@ -9,8 +9,9 @@
 /**
  * @brief 把 C++ 球体集合适配为 QML 可直接绑定的只增量更新列表模型。
  *
- * 每一行对应一个 `Sphere`。自定义角色把球心三个分量、半径和颜色分别暴露给
- * `Repeater3D`，从而在球体移动时只通知相关角色变化，无需重建整个三维场景。
+ * 每一行对应一个 `Sphere`。自定义角色把球心三个分量、半径、颜色和材质参数
+ * 分别暴露给 `Repeater3D`，从而在球体移动时只通知相关角色变化，无需重建
+ * 整个三维场景。
  * 模型对象由 `SceneController` 持有，所有访问都发生在 GUI 线程。
  */
 class SphereModel final : public QAbstractListModel
@@ -27,6 +28,7 @@ public:
         RadiusRole,                 ///< 球体半径。
         SphereColorRole,            ///< 球体基础颜色。
         SpecularExponentRole,       ///< 第 3 章镜面反射指数。
+        ReflectivityRole,           ///< 第 4 章递归反射的混合权重。
         SphereIndexRole             ///< 稳定的模型行索引，用于拾取后反查球体。
     };
 
