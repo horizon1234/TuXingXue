@@ -1,12 +1,13 @@
-# 第 2 章：基础光线追踪演示
+# 第 2–3 章：基础光线追踪与光照演示
 
-这是《计算机图形学入门：3D 渲染指南》第 2 章的交互测试程序。
+这是《计算机图形学入门：3D 渲染指南》第 2、3 章共用的交互测试程序。项目直接在第 2 章代码上递进，没有拆分或复制工程。
 
-程序严格实现本章范围内的算法：固定相机、固定视口、射线与球体求交、最近交点和纯色输出。光照、阴影和高光留到后续章节。
+程序实现固定相机、射线与球体求交、最近交点、环境光、点光、方向光、漫反射和镜面反射。阴影仍留到第 4 章。
 
 ## 界面结构
 
-- 左侧：Qt Quick 3D 教学场景，显示概念相机、视口平面和三个球体。
+- 顶部：六种渐进场景选择，从第 2 章纯色基线逐步过渡到完整镜面反射。
+- 左侧：Qt Quick 3D 教学场景，显示概念相机、视口、光源和三个球体。
 - 右侧：C++ 在 CPU 上逐像素生成的光线追踪画布。
 - 底部：球体选择和 `X/Y/Z` 坐标控制。
 
@@ -23,6 +24,10 @@ QML / Qt Quick 3D
 C++
   ├─ CanvasToViewport
   ├─ IntersectRaySphere
+  ├─ ComputeLighting
+  │   ├─ 环境光
+  │   ├─ 漫反射
+  │   └─ 镜面反射
   ├─ TraceRay
   └─ QImage 像素输出
 ```
@@ -42,12 +47,18 @@ Qt Quick 3D 只负责左侧可视化。右侧图像由 `RayTracer` 按书中的�
 在当前机器上执行：
 
 ```powershell
+mingw32-make run
+```
+
+也可以分别构建和运行：
+
+```powershell
 powershell -ExecutionPolicy Bypass -File .\build.ps1
 .\build-ascii\ch02_raytracing.exe
 ```
 
-程序还提供截图验证参数：
+程序还提供自动截图和场景选择参数。`--lighting-mode` 的有效值为 `0..5`：
 
 ```powershell
-.\build-ascii\ch02_raytracing.exe --screenshot screenshot.png
+.\build-ascii\ch02_raytracing.exe --lighting-mode 5 --screenshot screenshot.png
 ```

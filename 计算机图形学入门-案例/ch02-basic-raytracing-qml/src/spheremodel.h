@@ -26,6 +26,7 @@ public:
         CenterZRole,                ///< 球心 Z 坐标。
         RadiusRole,                 ///< 球体半径。
         SphereColorRole,            ///< 球体基础颜色。
+        SpecularExponentRole,       ///< 第 3 章镜面反射指数。
         SphereIndexRole             ///< 稳定的模型行索引，用于拾取后反查球体。
     };
 

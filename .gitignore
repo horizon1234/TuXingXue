@@ -1,6 +1,3 @@
-# Source books are local study material and are not redistributed.
-*.pdf
-
 # CMake and Qt generated output.
 **/build/
 **/build-*/

@@ -76,6 +76,38 @@ void SceneController::setSelectedZ(float value)
     setSelectedCoordinate(2, value);
 }
 
+QStringList SceneController::lightingModeNames() const
+{
+    // 顺序必须与 RayTracer::LightingMode 保持一致，QML ComboBox 的索引会直接传回控制器。
+    return {
+        QStringLiteral("第2章 · 纯色基线"),
+        QStringLiteral("环境光 · I=0.2"),
+        QStringLiteral("点光 · I=0.6"),
+        QStringLiteral("方向光 · I=0.2"),
+        QStringLiteral("漫反射 · 三光源"),
+        QStringLiteral("镜面反射 · 完整模型")
+    };
+}
+
+int SceneController::lightingMode() const
+{
+    return m_lightingMode;
+}
+
+void SceneController::setLightingMode(int mode)
+{
+    constexpr int firstMode = static_cast<int>(RayTracer::LightingMode::Unlit);
+    constexpr int lastMode = static_cast<int>(RayTracer::LightingMode::SpecularCombined);
+    const int clampedMode = std::clamp(mode, firstMode, lastMode);
+    if (m_lightingMode == clampedMode) {
+        return;
+    }
+
+    m_lightingMode = clampedMode;
+    emit lightingModeChanged();
+    scheduleRender();
+}
+
 int SceneController::renderRevision() const
 {
     return m_renderRevision;
@@ -159,7 +191,11 @@ void SceneController::renderNow()
 
     // 当前示例同步渲染约几十毫秒，足以保持实现与书中伪代码一一对应。
     // 场景复杂后可把这一调用迁移到工作线程，但不得在工作线程直接访问 QML 对象。
-    const QImage image = RayTracer::render(RenderWidth, RenderHeight, m_sphereModel.spheres());
+    const auto lightingMode = static_cast<RayTracer::LightingMode>(m_lightingMode);
+    const QImage image = RayTracer::render(RenderWidth,
+                                           RenderHeight,
+                                           m_sphereModel.spheres(),
+                                           lightingMode);
     m_renderMilliseconds = timer.nsecsElapsed() / 1'000'000.0;
 
     // 必须先发布完整图像，再递增 URL 版本。否则 QML 可能以新 URL 请求到旧帧。

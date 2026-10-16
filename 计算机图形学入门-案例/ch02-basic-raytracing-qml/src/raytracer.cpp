@@ -2,16 +2,66 @@
 
 #include <QtGlobal>
 
+#include <algorithm>
 #include <cmath>
 
 // 使用接近白色的中性背景，既对应书中示例，也能与 QML 画布边界区分。
 const QColor RayTracer::BackgroundColor{248, 250, 252};
 
-QImage RayTracer::render(int width, int height, const std::vector<Sphere> &spheres)
+namespace {
+
+/**
+ * @brief 按演示模式返回第 3 章原书定义的光源组合。
+ *
+ * 光向量遵循原书约定：方向光的向量从表面点指向光源，而不是光传播的方向。
+ */
+std::vector<Light> lightsForMode(RayTracer::LightingMode mode)
+{
+    const Light ambient{LightType::Ambient, 0.2f, {}};
+    const Light point{LightType::Point, 0.6f, {2.0f, 1.0f, 0.0f}};
+    const Light directional{LightType::Directional, 0.2f, {1.0f, 4.0f, 4.0f}};
+
+    switch (mode) {
+    case RayTracer::LightingMode::AmbientOnly:
+        return {ambient};
+    case RayTracer::LightingMode::PointOnly:
+        return {point};
+    case RayTracer::LightingMode::DirectionalOnly:
+        return {directional};
+    case RayTracer::LightingMode::DiffuseCombined:
+    case RayTracer::LightingMode::SpecularCombined:
+        return {ambient, point, directional};
+    case RayTracer::LightingMode::Unlit:
+        return {};
+    }
+
+    return {};
+}
+
+} // namespace
+
+QImage RayTracer::render(int width,
+                         int height,
+                         const std::vector<Sphere> &spheres,
+                         LightingMode mode)
 {
     QImage image(width, height, QImage::Format_RGB32);
 
-    // 第 2 章暂时固定相机位置和朝向。方向由视口点本身确定，因此无需相机矩阵。
+    // 第 3 章用一个巨大球体模拟平坦地面。它只进入 CPU 求交集合，不进入可拖动模型，
+    // 避免左侧教学场景真的创建一个半径 5000 的 Quick 3D 球体。
+    std::vector<Sphere> renderSpheres = spheres;
+    if (mode != LightingMode::Unlit) {
+        renderSpheres.push_back({QStringLiteral("黄色地面"),
+                                 {0.0f, -5001.0f, 0.0f},
+                                 5000.0f,
+                                 QColor(255, 255, 0),
+                                 1000.0f});
+    }
+
+    const std::vector<Light> lights = lightsForMode(mode);
+    const bool includeSpecular = mode == LightingMode::SpecularCombined;
+
+    // 第 2、3 章均固定相机位置和朝向。方向由视口点本身确定，因此无需相机矩阵。
     const QVector3D cameraOrigin(0.0f, 0.0f, 0.0f);
     const float infinity = std::numeric_limits<float>::infinity();
 
@@ -27,7 +77,14 @@ QImage RayTracer::render(int width, int height, const std::vector<Sphere> &spher
             const QVector3D direction = canvasToViewport(canvasX, canvasY, width, height);
 
             // t=1 对应视口平面，因此 tMin=1 会忽略相机与视口之间的物体。
-            row[screenX] = traceRay(cameraOrigin, direction, 1.0f, infinity, spheres).rgb();
+            row[screenX] = traceRay(cameraOrigin,
+                                    direction,
+                                    1.0f,
+                                    infinity,
+                                    renderSpheres,
+                                    lights,
+                                    includeSpecular)
+                               .rgb();
         }
     }
 
@@ -81,7 +138,9 @@ QColor RayTracer::traceRay(const QVector3D &origin,
                            const QVector3D &direction,
                            float tMin,
                            float tMax,
-                           const std::vector<Sphere> &spheres)
+                           const std::vector<Sphere> &spheres,
+                           const std::vector<Light> &lights,
+                           bool includeSpecular)
 {
     // closestT 同时实现深度比较和物体遮挡：t 越小，交点越靠近射线原点。
     float closestT = std::numeric_limits<float>::infinity();
@@ -101,7 +160,88 @@ QColor RayTracer::traceRay(const QVector3D &origin,
         }
     }
 
-    // 本章尚未引入光照模型，所以命中后直接返回球体固有颜色。
-    return closestSphere ? closestSphere->color : BackgroundColor;
+    if (!closestSphere) {
+        return BackgroundColor;
+    }
+
+    // 空光源集合只出现在第 2 章基线模式，此时保留原先的纯色输出行为。
+    if (lights.empty()) {
+        return closestSphere->color;
+    }
+
+    const QVector3D point = origin + closestT * direction;
+    const QVector3D normal = (point - closestSphere->center).normalized();
+    const QVector3D view = -direction;
+    const float intensity = computeLighting(point,
+                                            normal,
+                                            view,
+                                            closestSphere->specularExponent,
+                                            lights,
+                                            includeSpecular);
+    return applyIntensity(closestSphere->color, intensity);
+}
+
+float RayTracer::computeLighting(const QVector3D &point,
+                                 const QVector3D &normal,
+                                 const QVector3D &view,
+                                 float specularExponent,
+                                 const std::vector<Light> &lights,
+                                 bool includeSpecular)
+{
+    float intensity = 0.0f;
+
+    for (const Light &light : lights) {
+        if (light.type == LightType::Ambient) {
+            // 环境光是对多次间接反射的常量近似，与表面方向和观察方向都无关。
+            intensity += light.intensity;
+            continue;
+        }
+
+        // 点光的向量随交点变化；方向光在场景中处处使用同一个光向量。
+        const QVector3D lightVector = light.type == LightType::Point
+                                         ? light.vector - point
+                                         : light.vector;
+        const float normalLength = normal.length();
+        const float lightLength = lightVector.length();
+        if (normalLength <= 0.0f || lightLength <= 0.0f) {
+            continue;
+        }
+
+        // Lambert 漫反射项：夹角越接近 0°，单位面积接收的光能越多。
+        const float normalDotLight = QVector3D::dotProduct(normal, lightVector);
+        if (normalDotLight > 0.0f) {
+            intensity += light.intensity * normalDotLight / (normalLength * lightLength);
+        }
+
+        if (!includeSpecular || specularExponent < 0.0f) {
+            continue;
+        }
+
+        // 原书的镜面模型先求光向量关于法线的反射 R，再比较 R 与视线 V。
+        const QVector3D reflection = 2.0f * normal * normalDotLight - lightVector;
+        const float reflectionDotView = QVector3D::dotProduct(reflection, view);
+        const float reflectionLength = reflection.length();
+        const float viewLength = view.length();
+        if (reflectionDotView > 0.0f && reflectionLength > 0.0f && viewLength > 0.0f) {
+            // 理论上的余弦位于 `[0,1]`；限幅可消除浮点舍入导致的轻微越界。
+            const float cosine = std::clamp(reflectionDotView / (reflectionLength * viewLength),
+                                            0.0f,
+                                            1.0f);
+            intensity += light.intensity * std::pow(cosine, specularExponent);
+        }
+    }
+
+    return intensity;
+}
+
+QColor RayTracer::applyIntensity(const QColor &color, float intensity)
+{
+    const auto scaledChannel = [intensity](int channel) {
+        return std::clamp(static_cast<int>(std::lround(channel * intensity)), 0, 255);
+    };
+
+    return QColor(scaledChannel(color.red()),
+                  scaledChannel(color.green()),
+                  scaledChannel(color.blue()));
 }
 

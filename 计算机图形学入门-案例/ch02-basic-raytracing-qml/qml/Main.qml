@@ -3,8 +3,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick3D
 
-// 第 2 章交互演示主窗口。
-// 左侧 Qt Quick 3D 仅解释空间关系；右侧图像完全由 C++ CPU 光线追踪器生成。
+// 第 2、3 章交互演示主窗口。
+// 左侧 Qt Quick 3D 解释空间与光源关系；右侧图像完全由 C++ CPU 光线追踪器生成。
 ApplicationWindow {
     id: root
 
@@ -13,11 +13,23 @@ ApplicationWindow {
     minimumWidth: 1100
     minimumHeight: 720
     visible: true
-    title: qsTr("第二章 · 基础光线追踪")
+    title: qsTr("第 2–3 章 · 光线追踪与光")
     color: "#e7e9ec"
 
     font.family: "Microsoft YaHei"
     font.pixelSize: 14
+
+    // 用一句短状态概括当前模式，便于对照相同几何场景在不同光照项下的差异。
+    function lightingSummary(mode) {
+        switch (mode) {
+        case 0: return qsTr("最近交点 · 固有色")
+        case 1: return qsTr("常量环境光 · 无方向")
+        case 2: return qsTr("点光位置 (2,1,0) · 漫反射")
+        case 3: return qsTr("方向 (1,4,4) · 漫反射")
+        case 4: return qsTr("环境光 + 点光 + 方向光")
+        default: return qsTr("漫反射 + 镜面反射")
+        }
+    }
 
     // 顶栏展示当前章节、渲染分辨率以及最近一帧 CPU 耗时。
     header: Rectangle {
@@ -41,20 +53,28 @@ ApplicationWindow {
                 spacing: 1
 
                 Label {
-                    text: qsTr("第二章 · 基础光线追踪")
+                    text: qsTr("第 2–3 章 · 光线追踪与光")
                     color: "#18212b"
                     font.pixelSize: 20
                     font.bold: true
                 }
 
                 Label {
-                    text: qsTr("固定相机 · 1×1 视口 · 纯色球体")
+                    text: root.lightingSummary(sceneController.lightingMode)
                     color: "#68727e"
                     font.pixelSize: 12
                 }
             }
 
             Item { Layout.fillWidth: true }
+
+            ComboBox {
+                id: lightingModeBox
+                Layout.preferredWidth: 230
+                model: sceneController.lightingModeNames
+                currentIndex: sceneController.lightingMode
+                onActivated: sceneController.lightingMode = currentIndex
+            }
 
             Label {
                 text: sceneController.renderWidth + " × " + sceneController.renderHeight
@@ -117,7 +137,9 @@ ApplicationWindow {
                             Item { Layout.fillWidth: true }
 
                             Label {
-                                text: qsTr("相机 O(0,0,0)  ·  视口 z=1")
+                                text: sceneController.lightingMode === 0
+                                      ? qsTr("相机 O(0,0,0)  ·  视口 z=1")
+                                      : qsTr("光源与材质同步预览")
                                 color: "#7a8490"
                                 font.family: "Consolas"
                                 font.pixelSize: 12
@@ -159,31 +181,61 @@ ApplicationWindow {
                                 clipFar: 3000
                             }
 
-                            // 这些灯光只用于增强左侧模型的空间感，不会影响右侧纯色渲染结果。
+                            // 左侧灯光用于直观预览当前模式；右侧仍独立执行书中的 CPU 光照公式。
+                            // 第 3 章尚未引入阴影，因此所有教学灯都关闭阴影投射。
                             DirectionalLight {
                                 eulerRotation: Qt.vector3d(-35, -30, 0)
-                                brightness: 1.2
-                                ambientColor: "#737b85"
-                                castsShadow: true
-                                shadowFactor: 35
+                                visible: sceneController.lightingMode === 0
+                                         || sceneController.lightingMode === 3
+                                         || sceneController.lightingMode >= 4
+                                brightness: sceneController.lightingMode === 0 ? 1.2 : 1.0
+                                ambientColor: sceneController.lightingMode === 0 ? "#737b85" : "#202020"
+                                castsShadow: false
                             }
 
                             PointLight {
-                                position: Qt.vector3d(-350, 450, 250)
-                                brightness: 5
-                                quadraticFade: 0.000004
+                                // 书中点光位置 (2,1,0) 按左侧比例映射为 (200,100,0)。
+                                position: Qt.vector3d(200, 100, 0)
+                                visible: sceneController.lightingMode === 0
+                                         || sceneController.lightingMode === 2
+                                         || sceneController.lightingMode >= 4
+                                brightness: sceneController.lightingMode === 0 ? 4 : 3
+                                constantFade: 1
+                                linearFade: 0
+                                quadraticFade: 0
+                                castsShadow: false
                             }
 
-                            // 中性地面提供稳定的空间参照，不属于书中的待渲染场景。
+                            // 模式 0 保留原有教学地面；第 3 章模式改为书中的黄色“大球地面”。
                             Model {
                                 source: "#Cube"
                                 position: Qt.vector3d(0, -220, -300)
                                 scale: Qt.vector3d(8, 0.015, 8)
                                 castsShadows: false
-                                receivesShadows: true
+                                receivesShadows: false
                                 materials: [PrincipledMaterial {
-                                    baseColor: '#9c216d'
-                                    roughness: 1.0
+                                    baseColor: sceneController.lightingMode === 0 ? "#9c216d" : "#e0bd12"
+                                    roughness: sceneController.lightingMode === 5 ? 0.24 : 1.0
+                                    emissiveFactor: sceneController.lightingMode === 1
+                                                    ? Qt.vector3d(0.18, 0.18, 0.03)
+                                                    : Qt.vector3d(0, 0, 0)
+                                }]
+                            }
+
+                            // 发光小球标出点光位置。它只是左侧图例，不属于 CPU 求交场景。
+                            Model {
+                                source: "#Sphere"
+                                position: Qt.vector3d(200, 100, 0)
+                                scale: Qt.vector3d(0.13, 0.13, 0.13)
+                                visible: sceneController.lightingMode === 2
+                                         || sceneController.lightingMode >= 4
+                                pickable: false
+                                castsShadows: false
+                                receivesShadows: false
+                                materials: [PrincipledMaterial {
+                                    baseColor: "#fff3a3"
+                                    emissiveFactor: Qt.vector3d(1, 0.82, 0.25)
+                                    roughness: 0.25
                                 }]
                             }
 
@@ -310,6 +362,7 @@ ApplicationWindow {
                                     required property real centerZ
                                     required property real radius
                                     required property color sphereColor
+                                    required property real specularExponent
                                     required property int sphereIndex
 
                                     objectName: "sphere-" + sphereIndex
@@ -321,17 +374,23 @@ ApplicationWindow {
 
                                     // 内置 #Sphere 的直径为 100；半径 r 应显示为直径 200r，故缩放 2r。
                                     scale: Qt.vector3d(radius * 2, radius * 2, radius * 2)
-                                    castsShadows: true
-                                    receivesShadows: true
+                                    castsShadows: false
+                                    receivesShadows: false
 
                                     materials: [PrincipledMaterial {
                                         baseColor: sphereColor
-                                        roughness: 0.52
+                                        roughness: sceneController.lightingMode === 5
+                                                   ? (specularExponent >= 500 ? 0.18 : 0.55)
+                                                   : 1.0
 
-                                        // 轻微自发光只标记当前选择，不改变 C++ 中的球体固有颜色。
-                                        emissiveFactor: sphereIndex === sceneController.selectedSphere
-                                                        ? Qt.vector3d(0.12, 0.12, 0.12)
-                                                        : Qt.vector3d(0, 0, 0)
+                                        // 环境光模式用均匀自发光近似；其他模式仅轻微标记当前选择。
+                                        emissiveFactor: sceneController.lightingMode === 1
+                                                        ? Qt.vector3d(sphereColor.r * 0.22,
+                                                                      sphereColor.g * 0.22,
+                                                                      sphereColor.b * 0.22)
+                                                        : (sphereIndex === sceneController.selectedSphere
+                                                           ? Qt.vector3d(0.08, 0.08, 0.08)
+                                                           : Qt.vector3d(0, 0, 0))
                                     }]
                                 }
                             }
@@ -439,7 +498,7 @@ ApplicationWindow {
                             Item { Layout.fillWidth: true }
 
                             Label {
-                                text: qsTr("CPU 光线追踪")
+                                text: sceneController.lightingModeNames[sceneController.lightingMode]
                                 color: "#7a8490"
                                 font.pixelSize: 12
                             }

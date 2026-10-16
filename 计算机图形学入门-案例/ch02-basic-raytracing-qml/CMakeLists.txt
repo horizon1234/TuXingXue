@@ -17,6 +17,7 @@ qt_policy(SET QTP0004 NEW)
 # 主程序包含 QML 后端、CPU 光线追踪算法和 image provider。
 qt_add_executable(ch02_raytracing
     src/main.cpp
+    src/light.h
     src/rayimageprovider.cpp
     src/rayimageprovider.h
     src/raytracer.cpp

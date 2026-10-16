@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="520" viewBox="0 0 1000 520">
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#15803d"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#dc2626"/>
+    </marker>
+    <marker id="arrow-violet" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="520" fill="#ffffff"/>
+  <text x="50" y="52" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" fill="#17202a">一个交点需要记住的四个向量</text>
+  <text x="50" y="82" font-family="Microsoft YaHei, sans-serif" font-size="16" fill="#5f6b76">所有向量都从表面交点 P 出发，方向约定决定公式正负号</text>
+
+  <rect x="50" y="112" width="570" height="330" rx="6" fill="#f7f9fb" stroke="#cbd3db"/>
+  <line x1="95" y1="375" x2="575" y2="375" stroke="#5f6b76" stroke-width="5"/>
+  <circle cx="335" cy="375" r="8" fill="#17202a"/>
+  <text x="318" y="408" font-family="Consolas, monospace" font-size="22" font-weight="700" fill="#17202a">P</text>
+
+  <line x1="335" y1="365" x2="335" y2="165" stroke="#2563eb" stroke-width="5" marker-end="url(#arrow-blue)"/>
+  <text x="350" y="182" font-family="Consolas, monospace" font-size="22" font-weight="700" fill="#2563eb">N 法线</text>
+
+  <line x1="328" y1="368" x2="165" y2="195" stroke="#15803d" stroke-width="5" marker-end="url(#arrow-green)"/>
+  <text x="105" y="178" font-family="Consolas, monospace" font-size="22" font-weight="700" fill="#15803d">L 指向光源</text>
+
+  <line x1="342" y1="368" x2="505" y2="205" stroke="#dc2626" stroke-width="5" marker-end="url(#arrow-red)"/>
+  <text x="477" y="188" font-family="Consolas, monospace" font-size="22" font-weight="700" fill="#dc2626">R 反射方向</text>
+
+  <line x1="342" y1="371" x2="535" y2="285" stroke="#7c3aed" stroke-width="5" marker-end="url(#arrow-violet)"/>
+  <text x="485" y="315" font-family="Consolas, monospace" font-size="22" font-weight="700" fill="#7c3aed">V 指向相机</text>
+
+  <rect x="655" y="112" width="295" height="145" rx="6" fill="#eef6ff" stroke="#9fc4ee"/>
+  <text x="680" y="148" font-family="Microsoft YaHei, sans-serif" font-size="20" font-weight="700" fill="#1e4f85">漫反射</text>
+  <text x="680" y="188" font-family="Consolas, monospace" font-size="21" fill="#17202a">I_d = I_L max(0,</text>
+  <text x="713" y="220" font-family="Consolas, monospace" font-size="21" fill="#17202a">N·L / |N||L|)</text>
+
+  <rect x="655" y="277" width="295" height="165" rx="6" fill="#fff4f3" stroke="#efb0aa"/>
+  <text x="680" y="313" font-family="Microsoft YaHei, sans-serif" font-size="20" font-weight="700" fill="#9f2d25">镜面反射</text>
+  <text x="680" y="352" font-family="Consolas, monospace" font-size="20" fill="#17202a">R = 2N(N·L) - L</text>
+  <text x="680" y="388" font-family="Consolas, monospace" font-size="20" fill="#17202a">I_s = I_L max(0,</text>
+  <text x="713" y="420" font-family="Consolas, monospace" font-size="20" fill="#17202a">R·V / |R||V|)^s</text>
+
+  <text x="50" y="486" font-family="Microsoft YaHei, sans-serif" font-size="17" fill="#374151">记忆：N·L 决定“受光多少”，R·V 决定“高光是否朝向相机”，指数 s 决定高光宽窄。</text>
+</svg>

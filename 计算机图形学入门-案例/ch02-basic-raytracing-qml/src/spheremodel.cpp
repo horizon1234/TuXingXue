@@ -37,6 +37,8 @@ QVariant SphereModel::data(const QModelIndex &index, int role) const
         return sphere.radius;
     case SphereColorRole:
         return sphere.color;
+    case SpecularExponentRole:
+        return sphere.specularExponent;
     case SphereIndexRole:
         return index.row();
     default:
@@ -54,6 +56,7 @@ QHash<int, QByteArray> SphereModel::roleNames() const
         {CenterZRole, "centerZ"},
         {RadiusRole, "radius"},
         {SphereColorRole, "sphereColor"},
+        {SpecularExponentRole, "specularExponent"},
         {SphereIndexRole, "sphereIndex"}
     };
 }
@@ -93,10 +96,10 @@ void SphereModel::resetToDefaults()
     // begin/endResetModel 保证 ComboBox 和 Repeater3D 不会在容器替换期间读取旧行。
     beginResetModel();
     m_spheres = {
-        // 坐标、半径和颜色对应书中第 2 章的第一个演示场景。
-        {QStringLiteral("红色球体"), {0.0f, -1.0f, 3.0f}, 1.0f, QColor(225, 55, 55)},
-        {QStringLiteral("蓝色球体"), {2.0f, 0.0f, 4.0f}, 1.0f, QColor(45, 105, 210)},
-        {QStringLiteral("绿色球体"), {-2.0f, 0.0f, 4.0f}, 1.0f, QColor(40, 170, 95)}
+        // 几何数据沿用第 2 章；颜色和光泽度对应第 3 章最终场景的精确定义。
+        {QStringLiteral("红色球体"), {0.0f, -1.0f, 3.0f}, 1.0f, QColor(255, 0, 0), 500.0f},
+        {QStringLiteral("蓝色球体"), {2.0f, 0.0f, 4.0f}, 1.0f, QColor(0, 0, 255), 500.0f},
+        {QStringLiteral("绿色球体"), {-2.0f, 0.0f, 4.0f}, 1.0f, QColor(0, 255, 0), 10.0f}
     };
     endResetModel();
 }
