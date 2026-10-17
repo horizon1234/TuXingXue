@@ -17,13 +17,14 @@
  * @brief 创建 Qt Quick 应用、连接 C++ 场景后端并进入事件循环。
  *
  * 可选参数 `--screenshot <path>` 用于自动化视觉验证：窗口完成首帧渲染后保存
- * 截图并退出；`--lighting-mode <0..8>` 用于直接选择第 2～4 章的渐进场景。
+ * 截图并退出；`--lighting-mode <0..8>` 用于直接选择第 2～4 章的渐进场景；
+ * `--camera-preset <0..2>` 和 `--sampling-mode <0..1>` 用于验证第 5 章扩展。
  * 正常启动时程序持续运行，由用户通过 QML 界面切换效果并移动球体。
  */
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
-    QCoreApplication::setApplicationName(QStringLiteral("第2至4章光线追踪演示"));
+    QCoreApplication::setApplicationName(QStringLiteral("第2至5章光线追踪演示"));
     QCoreApplication::setOrganizationName(QStringLiteral("GraphicsStudy"));
 
     // 固定使用跨平台 Basic 样式，避免原生控件风格改变布局尺寸和截图结果。
@@ -31,7 +32,7 @@ int main(int argc, char *argv[])
 
     // 截图参数只服务构建验证，不影响正常交互模式。
     QCommandLineParser parser;
-    parser.setApplicationDescription(QStringLiteral("《计算机图形学入门》第2至4章交互演示"));
+    parser.setApplicationDescription(QStringLiteral("《计算机图形学入门》第2至5章交互演示"));
     parser.addHelpOption();
     const QCommandLineOption screenshotOption(
         QStringLiteral("screenshot"),
@@ -44,6 +45,19 @@ int main(int argc, char *argv[])
         QStringLiteral("选择渐进场景，取值范围为 0 到 8。"),
         QStringLiteral("index"));
     parser.addOption(lightingModeOption);
+
+    const QCommandLineOption cameraPresetOption(
+        QStringLiteral("camera-preset"),
+        QStringLiteral("选择第5章相机预设，取值范围为 0 到 2。"),
+        QStringLiteral("index"));
+    parser.addOption(cameraPresetOption);
+
+    const QCommandLineOption samplingModeOption(
+        QStringLiteral("sampling-mode"),
+        QStringLiteral("选择采样模式，0 为 1×1，1 为 2×2 超采样。"),
+        QStringLiteral("index"));
+    parser.addOption(samplingModeOption);
+
     parser.process(app);
 
     // 控制器必须早于 engine 构造，使析构顺序变为“先销毁 QML，再销毁控制器”。
@@ -59,6 +73,24 @@ int main(int argc, char *argv[])
             return 2;
         }
         sceneController.setLightingMode(requestedMode);
+    }
+
+    if (parser.isSet(cameraPresetOption)) {
+        bool isNumber = false;
+        const int requestedPreset = parser.value(cameraPresetOption).toInt(&isNumber);
+        if (!isNumber || requestedPreset < 0 || requestedPreset > 2) {
+            return 2;
+        }
+        sceneController.setCameraPreset(requestedPreset);
+    }
+
+    if (parser.isSet(samplingModeOption)) {
+        bool isNumber = false;
+        const int requestedSamplingMode = parser.value(samplingModeOption).toInt(&isNumber);
+        if (!isNumber || requestedSamplingMode < 0 || requestedSamplingMode > 1) {
+            return 2;
+        }
+        sceneController.setSamplingMode(requestedSamplingMode);
     }
 
     QQmlApplicationEngine engine;

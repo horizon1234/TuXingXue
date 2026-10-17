@@ -3,8 +3,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick3D
 
-// 第 2～4 章交互演示主窗口。
-// 左侧 Qt Quick 3D 解释空间、光源和遮挡关系；右侧图像完全由 C++ CPU 光线追踪器生成。
+// 第 2～5 章交互演示主窗口。
+// 左侧 Qt Quick 3D 解释空间、光源、遮挡和相机关系；右侧图像完全由 C++ CPU 光线追踪器生成。
 ApplicationWindow {
     id: root
 
@@ -13,7 +13,7 @@ ApplicationWindow {
     minimumWidth: 1100
     minimumHeight: 720
     visible: true
-    title: qsTr("第 2–4 章 · 光线追踪、光、阴影与反射")
+    title: qsTr("第 2–5 章 · 光线追踪扩展")
     color: "#e7e9ec"
 
     font.family: "Microsoft YaHei"
@@ -31,6 +31,24 @@ ApplicationWindow {
         case 6: return qsTr("可见性检测 · 硬阴影")
         case 7: return qsTr("阴影 + 一次反射")
         default: return qsTr("阴影 + 三层递归反射")
+        }
+    }
+
+    function cameraSummary(preset) {
+        switch (preset) {
+        case 1: return qsTr("左前方相机")
+        case 2: return qsTr("俯视相机")
+        default: return qsTr("默认相机")
+        }
+    }
+
+    // 左侧是从斜上方观察教学空间的旁观者，不能直接复用 CPU 相机的投影。
+    // 这里仅把相机标记移动到对应书本坐标，帮助理解“移动相机只改变射线起点”。
+    function cameraMarkerPosition(preset) {
+        switch (preset) {
+        case 1: return Qt.vector3d(-400, 180, 150)
+        case 2: return Qt.vector3d(0, 500, 200)
+        default: return Qt.vector3d(0, 0, 20)
         }
     }
 
@@ -56,7 +74,7 @@ ApplicationWindow {
                 spacing: 1
 
                 Label {
-                    text: qsTr("第 2–4 章 · 光线追踪进阶")
+                    text: qsTr("第 2–5 章 · 光线追踪扩展")
                     color: "#18212b"
                     font.pixelSize: 20
                     font.bold: true
@@ -64,6 +82,7 @@ ApplicationWindow {
 
                 Label {
                     text: root.lightingSummary(sceneController.lightingMode)
+                          + " · " + root.cameraSummary(sceneController.cameraPreset)
                     color: "#68727e"
                     font.pixelSize: 12
                 }
@@ -73,10 +92,26 @@ ApplicationWindow {
 
             ComboBox {
                 id: lightingModeBox
-                Layout.preferredWidth: 250
+                Layout.preferredWidth: 238
                 model: sceneController.lightingModeNames
                 currentIndex: sceneController.lightingMode
                 onActivated: sceneController.lightingMode = currentIndex
+            }
+
+            ComboBox {
+                id: cameraPresetBox
+                Layout.preferredWidth: 178
+                model: sceneController.cameraPresetNames
+                currentIndex: sceneController.cameraPreset
+                onActivated: sceneController.cameraPreset = currentIndex
+            }
+
+            ComboBox {
+                id: samplingModeBox
+                Layout.preferredWidth: 165
+                model: sceneController.samplingModeNames
+                currentIndex: sceneController.samplingMode
+                onActivated: sceneController.samplingMode = currentIndex
             }
 
             Label {
@@ -285,7 +320,7 @@ ApplicationWindow {
                             // 书中的概念相机位于原点。灰色立方体表示机身，橙色圆柱表示镜头；
                             // 它与 observerCamera 分离，避免“观察教学场景”和“参与算法的相机”混淆。
                             Node {
-                                position: Qt.vector3d(0, 0, 20)
+                                position: root.cameraMarkerPosition(sceneController.cameraPreset)
 
                                 Model {
                                     source: "#Cube"

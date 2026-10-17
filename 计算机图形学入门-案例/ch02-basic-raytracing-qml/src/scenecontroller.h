@@ -27,9 +27,15 @@ class SceneController final : public QObject
     Q_PROPERTY(float selectedY READ selectedY WRITE setSelectedY NOTIFY selectedPositionChanged)
     Q_PROPERTY(float selectedZ READ selectedZ WRITE setSelectedZ NOTIFY selectedPositionChanged)
 
-    // 第 2～4 章的渐进式场景。名称列表供 ComboBox 显示，索引直接对应 RayTracer 模式。
+    // 第 2～4 章的渐进式光照场景。名称列表供 ComboBox 显示，索引直接对应 RayTracer 模式。
     Q_PROPERTY(QStringList lightingModeNames READ lightingModeNames CONSTANT)
     Q_PROPERTY(int lightingMode READ lightingMode WRITE setLightingMode NOTIFY lightingModeChanged)
+
+    // 第 5 章相机与采样选项。它们独立于光照模式，避免破坏前四章的模式编号。
+    Q_PROPERTY(QStringList cameraPresetNames READ cameraPresetNames CONSTANT)
+    Q_PROPERTY(int cameraPreset READ cameraPreset WRITE setCameraPreset NOTIFY cameraPresetChanged)
+    Q_PROPERTY(QStringList samplingModeNames READ samplingModeNames CONSTANT)
+    Q_PROPERTY(int samplingMode READ samplingMode WRITE setSamplingMode NOTIFY samplingModeChanged)
 
     // 渲染状态。revision 用于使 image:// URL 失效，耗时用于界面性能反馈。
     Q_PROPERTY(int renderRevision READ renderRevision NOTIFY renderRevisionChanged)
@@ -77,6 +83,24 @@ public:
     /** @brief 切换光照、阴影或反射演示模式，并调度右侧画布重新渲染。 */
     void setLightingMode(int mode);
 
+    /** @return 第 5 章相机预设名称，索引对应 CPU 渲染器中的相机姿态。 */
+    QStringList cameraPresetNames() const;
+
+    /** @return 当前相机预设，范围为 `[0,2]`。 */
+    int cameraPreset() const;
+
+    /** @brief 切换相机位置和朝向预设，并调度右侧画布重新渲染。 */
+    void setCameraPreset(int preset);
+
+    /** @return 第 5 章采样模式名称。 */
+    QStringList samplingModeNames() const;
+
+    /** @return 当前采样模式，`0` 为 1×1，`1` 为 2×2 超采样。 */
+    int samplingMode() const;
+
+    /** @brief 切换每像素采样数量，并调度右侧画布重新渲染。 */
+    void setSamplingMode(int mode);
+
     /** @return 已发布渲染帧的递增版本号。 */
     int renderRevision() const;
     /** @return 最近一帧的 CPU 渲染耗时，单位为毫秒。 */
@@ -108,6 +132,10 @@ signals:
     void renderMillisecondsChanged();
     /** @brief 第 2～4 章光照、阴影或递归反射演示模式已经切换。 */
     void lightingModeChanged();
+    /** @brief 第 5 章相机预设已经切换。 */
+    void cameraPresetChanged();
+    /** @brief 第 5 章采样模式已经切换。 */
+    void samplingModeChanged();
 
 private:
     /**
@@ -131,6 +159,8 @@ private:
     QTimer m_renderTimer;                       ///< 合并滑块和拖动产生的高频渲染请求。
     int m_selectedSphere = 0;                   ///< 当前选中的模型行。
     int m_lightingMode = 8;                     ///< 默认显示第 4 章的三层递归反射场景。
+    int m_cameraPreset = 0;                     ///< 默认使用原书相机：原点朝向 +Z。
+    int m_samplingMode = 0;                     ///< 默认每像素 1 条射线，保持交互速度。
     int m_renderRevision = 0;                   ///< 已发布帧的单调递增版本号。
     double m_renderMilliseconds = 0.0;          ///< 最近一次 CPU 渲染耗时。
 };

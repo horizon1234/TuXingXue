@@ -12,11 +12,25 @@
 #include <vector>
 
 /**
+ * @brief 描述 CPU 光线追踪器使用的相机姿态。
+ *
+ * 三个方向向量构成相机坐标系的正交基：`right` 指向屏幕右侧，`up` 指向屏幕上方，
+ * `forward` 指向观察方向。相机空间中的视口方向会按这三个基向量转换到世界空间。
+ */
+struct CameraPose
+{
+    QVector3D position{0.0f, 0.0f, 0.0f}; ///< 世界空间中的相机位置。
+    QVector3D right{1.0f, 0.0f, 0.0f}; ///< 相机屏幕向右的单位向量。
+    QVector3D up{0.0f, 1.0f, 0.0f}; ///< 相机屏幕向上的单位向量。
+    QVector3D forward{0.0f, 0.0f, 1.0f}; ///< 相机观察方向的单位向量。
+};
+
+/**
  * @brief 实现第 2 章基础求交、第 3 章局部光照和第 4 章阴影、递归反射。
  *
  * 该类无内部可变状态，所有算法均为纯静态函数，因此相同输入必然产生相同输出。
- * 场景使用书中的坐标约定：相机在原点，朝 +Z 方向观察；画布坐标以中心为原点，
- * +X 向右、+Y 向上。启用第 4 章功能后，每个主射线还可能为非环境光发射
+ * 画布坐标以中心为原点，+X 向右、+Y 向上；相机姿态由 `CameraPose` 提供，默认姿态
+ * 才是原书中的原点、+Z 朝向。启用第 4 章功能后，每个主射线还可能为非环境光发射
  * 阴影射线，并沿镜面方向继续递归追踪。
  */
 class RayTracer
@@ -45,14 +59,19 @@ public:
      * @param height 输出图像高度，单位为像素，必须大于零。
      * @param spheres 当前可交互的三个球体；光照模式会自动追加书中的黄色地面球。
      * @param mode 决定启用哪些光源、阴影以及递归反射深度。
+     * @param camera 当前相机的位置和方向；默认姿态与第 2 章相同。
+     * @param sampleGrid 采样网格边长；`1` 表示每像素 1 条射线，`2` 表示 2×2 超采样。
      * @return 按屏幕行顺序存储的 `QImage::Format_RGB32` 图像。
      *
-     * 每个像素发射一条射线，并使用 `tMin = 1` 忽略视口平面之前的交点。
+     * 每个像素按 `sampleGrid × sampleGrid` 发射主射线；主射线从相机位置出发，
+     * 使用一个很小的正数作为 `tMin`，次级阴影/反射射线则通过同样的 epsilon 避免自相交。
      */
     static QImage render(int width,
                          int height,
                          const std::vector<Sphere> &spheres,
-                         LightingMode mode = LightingMode::Unlit);
+                         LightingMode mode = LightingMode::Unlit,
+                         const CameraPose &camera = CameraPose{},
+                         int sampleGrid = 1);
 
     /**
      * @brief 把以画布中心为原点的像素坐标映射到三维视口平面。
@@ -62,7 +81,7 @@ public:
      * @param canvasHeight 画布总高度，单位为像素。
      * @return 视口平面 `z = ProjectionDistance` 上对应的三维点。
      */
-    static QVector3D canvasToViewport(int x, int y, int canvasWidth, int canvasHeight);
+    static QVector3D canvasToViewport(float x, float y, int canvasWidth, int canvasHeight);
 
     /**
      * @brief 求参数射线 `P(t) = origin + t * direction` 与球体的交点参数。

@@ -7,6 +7,44 @@
 
 #include <algorithm>
 
+namespace {
+
+/**
+ * @brief 根据相机位置和观察目标建立右、上、前三个正交基向量。
+ *
+ * 这里使用右手坐标约定：`right = worldUp × forward`，再由 `forward × right`
+ * 得到真正与前方向垂直的上方向。这样相机旋转只影响射线方向，不会修改场景数据。
+ */
+CameraPose lookAtCamera(const QVector3D &position,
+                        const QVector3D &target,
+                        const QVector3D &worldUp = QVector3D(0.0f, 1.0f, 0.0f))
+{
+    const QVector3D forward = (target - position).normalized();
+    const QVector3D right = QVector3D::crossProduct(worldUp, forward).normalized();
+    const QVector3D up = QVector3D::crossProduct(forward, right).normalized();
+    return {position, right, up, forward};
+}
+
+/**
+ * @brief 返回第 5 章用于对比的三个相机姿态。
+ *
+ * 三个预设都看向球体组的中心附近，保证切换相机时右侧画布仍能看到有意义的内容。
+ */
+CameraPose cameraForPreset(int preset)
+{
+    switch (preset) {
+    case 1:
+        return lookAtCamera({-4.0f, 1.8f, -1.5f}, {0.0f, -0.2f, 4.0f});
+    case 2:
+        return lookAtCamera({0.0f, 5.0f, -2.0f}, {0.0f, -0.4f, 4.0f});
+    case 0:
+    default:
+        return lookAtCamera({0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 4.0f});
+    }
+}
+
+} // namespace
+
 SceneController::SceneController(RayImageProvider *imageProvider, QObject *parent)
     : QObject(parent)
     , m_imageProvider(imageProvider)
@@ -111,6 +149,57 @@ void SceneController::setLightingMode(int mode)
     scheduleRender();
 }
 
+QStringList SceneController::cameraPresetNames() const
+{
+    return {
+        QStringLiteral("相机 · 默认正视"),
+        QStringLiteral("相机 · 左前方"),
+        QStringLiteral("相机 · 俯视")
+    };
+}
+
+int SceneController::cameraPreset() const
+{
+    return m_cameraPreset;
+}
+
+void SceneController::setCameraPreset(int preset)
+{
+    const int clampedPreset = std::clamp(preset, 0, 2);
+    if (m_cameraPreset == clampedPreset) {
+        return;
+    }
+
+    m_cameraPreset = clampedPreset;
+    emit cameraPresetChanged();
+    scheduleRender();
+}
+
+QStringList SceneController::samplingModeNames() const
+{
+    return {
+        QStringLiteral("采样 · 1×1"),
+        QStringLiteral("采样 · 2×2 超采样")
+    };
+}
+
+int SceneController::samplingMode() const
+{
+    return m_samplingMode;
+}
+
+void SceneController::setSamplingMode(int mode)
+{
+    const int clampedMode = std::clamp(mode, 0, 1);
+    if (m_samplingMode == clampedMode) {
+        return;
+    }
+
+    m_samplingMode = clampedMode;
+    emit samplingModeChanged();
+    scheduleRender();
+}
+
 int SceneController::renderRevision() const
 {
     return m_renderRevision;
@@ -192,13 +281,18 @@ void SceneController::renderNow()
     QElapsedTimer timer;
     timer.start();
 
-    // 当前示例同步渲染约几十毫秒，足以保持实现与书中伪代码一一对应。
+    // 当前示例同步渲染，足以保持实现与书中伪代码一一对应。第 5 章的 2×2
+    // 超采样会按样本数增加耗时，因此界面同时显示最近一帧耗时供比较。
     // 场景复杂后可把这一调用迁移到工作线程，但不得在工作线程直接访问 QML 对象。
     const auto lightingMode = static_cast<RayTracer::LightingMode>(m_lightingMode);
+    const CameraPose camera = cameraForPreset(m_cameraPreset);
+    const int sampleGrid = m_samplingMode == 1 ? 2 : 1;
     const QImage image = RayTracer::render(RenderWidth,
                                            RenderHeight,
                                            m_sphereModel.spheres(),
-                                           lightingMode);
+                                           lightingMode,
+                                           camera,
+                                           sampleGrid);
     m_renderMilliseconds = timer.nsecsElapsed() / 1'000'000.0;
 
     // 必须先发布完整图像，再递增 URL 版本。否则 QML 可能以新 URL 请求到旧帧。

@@ -46,9 +46,16 @@ std::vector<Light> lightsForMode(RayTracer::LightingMode mode)
 QImage RayTracer::render(int width,
                          int height,
                          const std::vector<Sphere> &spheres,
-                         LightingMode mode)
+                         LightingMode mode,
+                         const CameraPose &camera,
+                         int sampleGrid)
 {
     QImage image(width, height, QImage::Format_RGB32);
+
+    // 目前 Demo 暴露 1×1 和 2×2 两档。这里再次限幅，保证 C++ 调用方即使传入
+    // 非法值也不会产生除零或意外的超大采样循环。
+    sampleGrid = sampleGrid >= 2 ? 2 : 1;
+    const int sampleCount = sampleGrid * sampleGrid;
 
     // 第 3、4 章用一个巨大球体模拟平坦地面。它只进入 CPU 求交集合，不进入
     // 可拖动模型，避免左侧教学场景真的创建一个半径 5000 的 Quick 3D 球体。
@@ -80,8 +87,8 @@ QImage RayTracer::render(int width,
         recursionDepth = 3;
     }
 
-    // 第 2～4 章均固定相机位置和朝向。方向由视口点本身确定，因此无需相机矩阵。
-    const QVector3D cameraOrigin(0.0f, 0.0f, 0.0f);
+    // 第 5 章把相机位置和方向从固定常量提升为参数。每个像素仍先在相机空间
+    // 生成视口方向，再用 right/up/forward 三个基向量变换到世界空间。
     const float infinity = std::numeric_limits<float>::infinity();
 
     for (int screenY = 0; screenY < height; ++screenY) {
@@ -89,33 +96,67 @@ QImage RayTracer::render(int width,
         auto *row = reinterpret_cast<QRgb *>(image.scanLine(screenY));
 
         // QImage 的 Y 轴向下，而书中的画布以中心为原点且 Y 轴向上。
-        const int canvasY = height / 2 - screenY;
+        const float canvasY = static_cast<float>(height / 2 - screenY);
 
         for (int screenX = 0; screenX < width; ++screenX) {
-            const int canvasX = screenX - width / 2;
-            const QVector3D direction = canvasToViewport(canvasX, canvasY, width, height);
+            const float canvasX = static_cast<float>(screenX - width / 2);
+            QVector3D colorSum(0.0f, 0.0f, 0.0f);
 
-            // t=1 对应视口平面，因此 tMin=1 会忽略相机与视口之间的物体。
-            row[screenX] = traceRay(cameraOrigin,
-                                    direction,
-                                    1.0f,
-                                    infinity,
-                                    renderSpheres,
-                                    lights,
-                                    includeSpecular,
-                                    includeShadows,
-                                    recursionDepth)
-                               .rgb();
+            // 1×1 模式保持原有中心采样位置；2×2 模式在像素中心周围放置四个
+            // 偏移样本。对颜色求平均即可把几何边界的硬切换变成平滑过渡。
+            for (int sampleY = 0; sampleY < sampleGrid; ++sampleY) {
+                for (int sampleX = 0; sampleX < sampleGrid; ++sampleX) {
+                    const float offsetX = sampleGrid == 1
+                                              ? 0.0f
+                                              : (static_cast<float>(sampleX) + 0.5f)
+                                                    / static_cast<float>(sampleGrid)
+                                                    - 0.5f;
+                    const float offsetY = sampleGrid == 1
+                                              ? 0.0f
+                                              : (static_cast<float>(sampleY) + 0.5f)
+                                                    / static_cast<float>(sampleGrid)
+                                                    - 0.5f;
+
+                    const QVector3D cameraDirection = canvasToViewport(canvasX + offsetX,
+                                                                         canvasY + offsetY,
+                                                                         width,
+                                                                         height);
+                    const QVector3D direction = camera.right * cameraDirection.x()
+                                                + camera.up * cameraDirection.y()
+                                                + camera.forward * cameraDirection.z();
+
+                    // 任意相机的投影平面不一定位于所有物体之前，因此第 5 章改用
+                    // 很小的正数作为主射线下界；次级射线继续使用同一 epsilon 思路。
+                    const QColor sampleColor = traceRay(camera.position,
+                                                        direction,
+                                                        SecondaryRayEpsilon,
+                                                        infinity,
+                                                        renderSpheres,
+                                                        lights,
+                                                        includeSpecular,
+                                                        includeShadows,
+                                                        recursionDepth);
+                    colorSum += QVector3D(sampleColor.red(),
+                                          sampleColor.green(),
+                                          sampleColor.blue());
+                }
+            }
+
+            const QVector3D average = colorSum / static_cast<float>(sampleCount);
+            row[screenX] = qRgb(std::clamp(static_cast<int>(std::lround(average.x())), 0, 255),
+                                std::clamp(static_cast<int>(std::lround(average.y())), 0, 255),
+                                std::clamp(static_cast<int>(std::lround(average.z())), 0, 255));
         }
     }
 
     return image;
 }
 
-QVector3D RayTracer::canvasToViewport(int x, int y, int canvasWidth, int canvasHeight)
+QVector3D RayTracer::canvasToViewport(float x, float y, int canvasWidth, int canvasHeight)
 {
-    // 画布和视口中心、轴方向均已对齐，转换只需按各自宽高比例缩放。
-    // 视口嵌在三维空间的 z=d 平面上，所以返回值补上固定的 Z 分量。
+    // 画布和视口中心、轴方向均已对齐，转换只需按各自宽高比例缩放。x、y
+    // 使用浮点数是为了让超采样样本落在像素中心周围的子像素位置。
+    // 视口嵌在相机空间的 z=d 平面上，所以返回值补上固定的 Z 分量。
     return {
         x * ViewportWidth / static_cast<float>(canvasWidth),
         y * ViewportHeight / static_cast<float>(canvasHeight),
